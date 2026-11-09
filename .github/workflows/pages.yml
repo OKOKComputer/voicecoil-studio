@@ -1,7 +1,8 @@
 name: deploy-pages
+# Деплой src/ на GitHub Pages. Запускается вручную (Actions → deploy-pages → Run workflow):
+# на приватном репозитории Pages доступны только на платном плане, поэтому автозапуск на push выключен.
+# Перед первым запуском: Settings → Pages → Source: GitHub Actions.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read

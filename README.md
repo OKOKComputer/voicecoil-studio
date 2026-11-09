@@ -4,7 +4,7 @@
 
 *Browser-based design environment for voice coils, ironless BLDC motors, spherical motors and arbitrary magnet/coil assemblies. Exact analytic fields, Lorentz and magnetic-charge forces, image-plate steel, motor constant Km everywhere. Russian UI.*
 
-**Живая версия:** https://okokcomputer.github.io/voicecoil-studio/ · **старая v1 для сравнения:** https://okokcomputer.github.io/voicecoil-studio/v1/
+**Живая версия (артефакт Claude, по ссылке):** https://claude.ai/artifact/HhWuPKcPw7Y5BCLnsJnRAC — старая v1 открывается из её шапки. Публичная ссылка на GitHub Pages появится, когда репозиторий станет публичным: Settings → Pages → Source: GitHub Actions, затем Actions → deploy-pages → Run workflow.
 
 ![Войскол](docs/screenshots/voicecoil.png)
 
@@ -74,7 +74,7 @@ src/
   v1/index.html           первая версия, «Войскол под магнит» (октябрь 2026)
 test/                     проверки в Node
 docs/screenshots/
-.github/workflows/        tests.yml — тесты; pages.yml — деплой src/ на GitHub Pages
+.github/workflows/        tests.yml — тесты на каждый пуш; pages.yml — деплой src/ на GitHub Pages (вручную)
 ```
 
 ## Соглашения
