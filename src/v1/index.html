@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Войскол под магнит (v1)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EAEFEA; --panel:#F6F8F5; --ink:#1D2622; --muted:#5A6862; --line:#C9D3CC;
+  --copper:#B0602F; --steel:#2F6C80; --graphite:#38403D; --iron:#7C8681; --coilfill:rgba(29,38,34,.10);
+  --focus:#2F6C80;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#121816; --panel:#1A221F; --ink:#E2E9E4; --muted:#91A099; --line:#2D3935;
+  --copper:#D9884F; --steel:#5DA8C0; --graphite:#56605C; --iron:#8C9792; --coilfill:rgba(226,233,228,.12); --focus:#5DA8C0; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --paper:#121816; --panel:#1A221F; --ink:#E2E9E4; --muted:#91A099; --line:#2D3935;
+  --copper:#D9884F; --steel:#5DA8C0; --graphite:#56605C; --iron:#8C9792; --coilfill:rgba(226,233,228,.12); --focus:#5DA8C0; color-scheme:dark;}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.5 "Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;-webkit-text-size-adjust:100%}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:18px}
+.col{display:contents}
+header h1{font:700 clamp(26px,6vw,40px)/1.05 "Unbounded","Golos Text",system-ui,sans-serif;letter-spacing:-.02em;margin:0 0 8px}
+header p{margin:0;color:var(--muted);max-width:62ch}
+header .v1note{margin-top:8px;font-size:13px}
+header .v1note a{color:var(--steel)}
+#g-magnet{order:1} #viz{order:2} #rank{order:3} #g-params{order:4} footer{order:5}
+section.box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+h2{font:600 17px/1.3 "Golos Text",system-ui,sans-serif;margin:0 0 12px}
+h3{font:600 14px/1.3 "Golos Text",system-ui,sans-serif;margin:18px 0 8px;color:var(--muted)}
+h3:first-of-type{margin-top:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+label.f.wide{grid-column:1/-1}
+input[type=number],select{font:500 15px/1.2 "Golos Text",system-ui,sans-serif;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible,tr:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+label.chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;grid-column:1/-1;cursor:pointer}
+label.chk input{margin-top:3px;accent-color:var(--steel);width:16px;height:16px}
+.hint{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+#viz .top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+#cfgname{font:600 17px/1.3 "Golos Text",sans-serif;margin:0}
+#status{font-size:13px;color:var(--muted)}
+.canvasbox{position:relative;margin:12px -4px 4px;border-radius:10px;overflow:hidden;background:var(--paper)}
+canvas{display:block;width:100%;touch-action:manipulation}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.km{display:flex;align-items:flex-end;gap:14px;margin:14px 0 4px;flex-wrap:wrap}
+.km .v{font:700 clamp(40px,11vw,60px)/0.95 "Unbounded",system-ui,sans-serif;letter-spacing:-.03em}
+.km .u{font-size:14px;color:var(--muted);padding-bottom:4px;max-width:22ch}
+dl.read{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:2px 16px;margin:12px 0 0}
+dl.read div{padding:8px 0;border-top:1px solid var(--line)}
+dt{font-size:12.5px;color:var(--muted)} dd{margin:2px 0 0;font-weight:600;font-size:16px}
+.note{font-size:13.5px;margin:14px 0 0;padding:10px 12px;border-left:3px solid var(--copper);background:var(--paper);border-radius:0 8px 8px 0}
+.note.warn{border-left-color:#C0392B}
+.tablewrap{overflow-x:auto;margin:0 -4px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+th{font-weight:500;color:var(--muted);font-size:12.5px;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+td{text-align:right;padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td:first-child{white-space:normal;min-width:170px}
+td small{display:block;color:var(--muted);font-size:12px;white-space:normal}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--paper)}
+tbody tr.sel{background:var(--paper);box-shadow:inset 3px 0 0 var(--copper)}
+tbody tr.bad{cursor:default;color:var(--muted)}
+.bar{display:inline-block;height:6px;border-radius:3px;background:var(--copper);vertical-align:middle;margin-left:6px;opacity:.75}
+button.ghost{font:500 13px/1 "Golos Text",sans-serif;background:none;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:7px 10px;cursor:pointer}
+footer{font-size:12.5px;color:var(--muted);max-width:75ch}
+footer p{margin:0 0 8px}
+@media (min-width:900px){
+  .wrap{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;padding-top:28px}
+  header{grid-column:1/-1}
+  .col{display:flex;flex-direction:column;gap:20px}
+  .col.left{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;padding-bottom:8px}
+  footer{grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Войскол под магнит</h1>
+  <p>Задаёте магнит, симулятор перебирает компоновки и форму катушки и ищет максимум силы на ватт. Поле считается точно, по модели эквивалентных токов.</p>
+  <p class="v1note">Это первая версия (октябрь 2026), сохранена для сравнения. Новая — <a href="../">Voicecoil Studio v2</a>.</p>
+</header>
+
+<div class="col left">
+<section class="box" id="g-magnet">
+  <h2>Магнит</h2>
+  <div class="grid2">
+    <label class="f">Форма
+      <select id="shape"><option value="cyl">Цилиндр</option><option value="ring">Кольцо</option></select></label>
+    <label class="f">Марка
+      <select id="grade">
+        <option value="1.20|nd">N35</option><option value="1.30|nd">N42</option><option value="1.35|nd">N45</option>
+        <option value="1.39|nd">N48</option><option value="1.45|nd" selected>N52</option><option value="1.08|smco">SmCo</option>
+        <option value="0.39|fe">Феррит</option></select></label>
+    <label class="f">Диаметр, мм<input type="number" id="D" value="10" min="1" step="0.5" inputmode="decimal"></label>
+    <label class="f" id="DinL">Отверстие, мм<input type="number" id="Din" value="4" min="0.5" step="0.5" inputmode="decimal"></label>
+    <label class="f">Высота, мм<input type="number" id="L" value="5" min="0.5" step="0.5" inputmode="decimal"></label>
+    <label class="f">Сколько таких есть<input type="number" id="count" value="2" min="1" max="6" step="1" inputmode="numeric"></label>
+  </div>
+  <p class="hint">Намагничен по высоте. Симулятор сам попробует собрать их в стопку, развернуть навстречу, поставить на сталь и в стакан.</p>
+</section>
+
+<section class="box" id="g-params">
+  <h2>Условия</h2>
+  <h3>Что ищем</h3>
+  <div class="grid2">
+    <label class="f wide">Цель
+      <select id="obj"><option value="km">Максимум силы на ватт (Km)</option><option value="acc">Максимум ускорения на ватт (Km / подвижная масса)</option></select></label>
+    <label class="f">Радиус узла до, мм<input type="number" id="Rmax" value="12" min="2" step="0.5" inputmode="decimal"></label>
+    <label class="f">Высота узла до, мм<input type="number" id="Hlim" value="0" min="0" step="1" inputmode="decimal"></label>
+    <label class="f wide">Масса катушки до, г<input type="number" id="mmax" value="0" min="0" step="0.5" inputmode="decimal"></label>
+  </div>
+  <p class="hint">0 значит без ограничения. Km растёт с количеством меди, поэтому без габарита или лимита массы катушка займёт всё доступное место.</p>
+  <h3>Движение</h3>
+  <div class="grid2">
+    <label class="f">Двигается
+      <select id="moving"><option value="coil">Катушка</option><option value="magnet">Магнит</option></select></label>
+    <label class="f">Ход полный, мм<input type="number" id="stroke" value="2" min="0" step="0.5" inputmode="decimal"></label>
+    <label class="f">Зазор до магнита, мм<input type="number" id="clear" value="0.3" min="0.05" step="0.05" inputmode="decimal"></label>
+    <label class="f">Полезный груз, г<input type="number" id="load" value="0" min="0" step="0.5" inputmode="decimal"></label>
+  </div>
+  <h3>Обмотка</h3>
+  <div class="grid2">
+    <label class="f">Проводник
+      <select id="cond"><option value="cu">Медь</option><option value="al">Алюминий</option></select></label>
+    <label class="f">Укладка
+      <select id="kf"><option value="0.6">Рядовая, 0,60</option><option value="0.7">Аккуратная, 0,70</option><option value="0.8" selected>Ортоциклическая, 0,80</option><option value="0.88">Прессованная с эпоксидкой, 0,88</option><option value="0.92">Квадратный провод, 0,92</option></select></label>
+    <label class="f">Темп. обмотки, °C<input type="number" id="T" value="80" min="20" max="200" step="5" inputmode="numeric"></label>
+    <label class="f">Охлаждение
+      <select id="hconv"><option value="12">Воздух</option><option value="40">Обдув</option><option value="150">В корпусе-радиаторе</option></select></label>
+    <label class="f">Напряжение, В<input type="number" id="U" value="5" min="0.5" step="0.5" inputmode="decimal"></label>
+    <label class="f">Провод, мм<input type="number" id="wire" value="0.23" min="0.03" step="0.01" inputmode="decimal"></label>
+    <label class="chk"><input type="checkbox" id="sections" checked><span>Разрешить встречные секции: катушка из нескольких частей, намотанных в разные стороны и включённых последовательно</span></label>
+    <label class="f wide">Точность сетки
+      <select id="res"><option value="36|54">Быстро</option><option value="48|72" selected>Нормально</option><option value="64|96">Точно (медленнее)</option></select></label>
+  </div>
+</section>
+</div>
+
+<div class="col right">
+<section class="box" id="viz">
+  <div class="top"><p id="cfgname">…</p><span id="status" role="status" aria-live="polite"></span></div>
+  <div class="canvasbox"><canvas id="cv" aria-label="Разрез узла: магниты, радиальное поле и катушка"></canvas></div>
+  <div class="legend">
+    <span><i class="sw" style="background:var(--copper)"></i>радиальное поле наружу</span>
+    <span><i class="sw" style="background:var(--steel)"></i>внутрь</span>
+    <span><i class="sw" style="background:var(--graphite)"></i>магнит, стрелка к N</span>
+    <span><i class="sw" style="background:var(--iron)"></i>сталь</span>
+    <span><i class="sw" style="border:2px solid var(--ink)"></i>катушка</span>
+    <label class="chk" style="grid-column:auto;font-size:12.5px;color:var(--muted)"><input type="checkbox" id="showff">свободная форма</label>
+  </div>
+  <div class="km"><span class="v" id="kmv">—</span><span class="u">Н/√Вт: столько ньютонов даёт один ватт нагрева, в среднем по ходу</span></div>
+  <dl class="read" id="read"></dl>
+  <h3 style="margin-top:20px">Обмотка вашим проводом</h3>
+  <dl class="read" id="wind"></dl>
+  <div id="notes"></div>
+</section>
+
+<section class="box" id="rank">
+  <h2>Все компоновки из ваших магнитов</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Компоновка</th><th>Km, Н/√Вт</th><th>Ускорение, м/с²/√Вт</th><th>Катушка, г</th><th>Ровность</th></tr></thead>
+    <tbody id="tb"></tbody></table></div>
+  <p class="hint">Нажмите на строку, чтобы посмотреть разрез. Ровность: насколько сила в худшей точке хода близка к лучшей.</p>
+</section>
+</div>
+
+<footer>
+  <p>Поле магнитов считается точно: каждый магнит заменяется эквивалентным поверхностным током, поле — через эллиптические интегралы (Derby–Olbert). Сталь учитывается двумя способами: идеальная плита под магнитами — методом изображений (точно для ненасыщенной плиты), стакан с ярмом — по магнитной цепи с утечкой и выпучиванием поля, это оценка ±30%.</p>
+  <p>Не учитываются: размагничивание поля катушкой, насыщение плиты, индуктивность и вихревые токи на высоких частотах, масса каркаса. «Свободная форма» — лучший набор ячеек при одинаковом токе; «градиентная обмотка» — теоретический потолок, если плотность тока в каждой точке пропорциональна полю.</p>
+</footer>
+</div>
+
+<script>
+const MU0=4e-7*Math.PI;
+function cel(kc,p,c,s){
+  if(kc===0) return NaN;
+  const errtol=1e-7; let k=Math.abs(kc),pp=p,cc=c,ss=s,em=1,f,q,g,kk;
+  if(p>0){pp=Math.sqrt(p);ss=s/pp;}
+  else{f=kc*kc;q=1-f;g=1-pp;f=f-pp;q=q*(ss-c*pp);pp=Math.sqrt(f/g);cc=(c-ss)/g;ss=-q/(g*g*pp)+cc*pp;}
+  f=cc;cc=cc+ss/pp;g=k/pp;ss=2*(ss+f*g);pp=g+pp;g=em;em=k+em;kk=k;
+  let it=0;
+  while(Math.abs(g-k)>g*errtol && it++<50){k=2*Math.sqrt(kk);kk=k*em;f=cc;cc=cc+ss/pp;g=kk/pp;ss=2*(ss+f*g);pp=g+pp;g=em;em=k+em;}
+  return (Math.PI/2)*(ss+cc*em)/(em*(em+pp));
+}
+function solBr(a,zc,b,rho,z){
+  const zz=z-zc, zp=zz+b, zm=zz-b, s2=(rho+a)*(rho+a), d2=(a-rho)*(a-rho);
+  const ap=a/Math.sqrt(zp*zp+s2), am=a/Math.sqrt(zm*zm+s2);
+  const kp=Math.sqrt((zp*zp+d2)/(zp*zp+s2)), km=Math.sqrt((zm*zm+d2)/(zm*zm+s2));
+  return ap*cel(kp,1,1,-1)-am*cel(km,1,1,-1);
+}
+const MAT={cu:{rho20:1.72e-8,alpha:0.00393,dens:8960},al:{rho20:2.82e-8,alpha:0.0039,dens:2700}};
+const MAGDENS={nd:7500,smco:8400,fe:4900};
+
+// stack geometry in metres
+function stackGeom(m,count,mode,spacer){
+  const mags=[]; let z=0;
+  for(let k=0;k<count;k++){ mags.push({z0:z,z1:z+m.L,dir: mode==='alt'?(k%2?-1:1):1}); z+=m.L+spacer; }
+  return {mags,top:z-spacer};
+}
+function surfaces(m,geom,plate){
+  const S=[]; const B0=m.Br/Math.PI;
+  for(const g of geom.mags){
+    const zc=(g.z0+g.z1)/2,b=(g.z1-g.z0)/2;
+    S.push({a:m.Ro,zc,b,s:B0*g.dir});
+    if(m.Ri>0) S.push({a:m.Ri,zc,b,s:-B0*g.dir});
+    if(plate){ S.push({a:m.Ro,zc:-zc,b,s:B0*g.dir}); if(m.Ri>0) S.push({a:m.Ri,zc:-zc,b,s:-B0*g.dir}); }
+  }
+  return S;
+}
+// main bare-magnet solver
+function solveBare(P,cfg){
+  const m=P.mag, c=P.clear, St=P.stroke, geom=stackGeom(m,cfg.count,cfg.mode,cfg.spacer);
+  const H=geom.top, margin=Math.max(m.L*1.2,m.Ro*1.2,St/2+c+0.002);
+  let zlo=-margin, zhi=H+margin;
+  if(cfg.plate) zlo=0;
+  if(P.Hlim>0){
+    if(H>P.Hlim) return {invalid:'магниты не влезают по высоте'};
+    if(cfg.plate){ zhi=Math.min(zhi,P.Hlim); }
+    else { zlo=Math.max(zlo,H/2-P.Hlim/2); zhi=Math.min(zhi,H/2+P.Hlim/2); }
+  }
+  const Rmax=P.Rmax, nr=P.nr, nzc=P.nz;
+  const dr=Rmax/nr, dz=(zhi-zlo)/nzc;
+  const sh=Math.round(St/2/dz);
+  const nzf=nzc+2*sh, zf0=zlo-sh*dz;
+  const S=surfaces(m,geom,cfg.plate);
+  // field grid weights w = Br*dV
+  const W=new Float64Array(nzf*nr), bF=new Float64Array(nzf*nr), dV=new Float64Array(nr);
+  for(let i=0;i<nr;i++){const r=(i+.5)*dr; dV[i]=2*Math.PI*r*dr*dz;}
+  for(let j=0;j<nzf;j++){const z=zf0+(j+.5)*dz;
+    for(let i=0;i<nr;i++){const r=(i+.5)*dr; let br=0;
+      if(cfg.plate && z<0){ br=0; } else
+      for(const s of S){ if(Math.abs(r-s.a)<1e-9) continue; br+=s.s*solBr(s.a,s.zc,s.b,r,z); }
+      bF[j*nr+i]=br; W[j*nr+i]=br*dV[i]; }}
+  // forbidden on coil rows
+  const F=new Uint8Array(nzc*nr);
+  for(let j=0;j<nzc;j++){const za=zlo+j*dz, zb=za+dz;
+    for(let i=0;i<nr;i++){const ra=i*dr, rb=ra+dr; let f=0;
+      if(rb>m.Ri-c && ra<m.Ro+c && zb>-c-St/2 && za<H+c+St/2 && !(m.Ri>0 && rb<=m.Ri-c)) f=1;
+      if(cfg.plate && za<c+St/2) f=1;
+      F[j*nr+i]=f;}}
+  const mat=MAT[P.cond], rho=mat.rho20*(1+mat.alpha*(P.T-20));
+  const kf=P.kf, densEff=kf*mat.dens+(1-kf)*1200;
+  const kfac=Math.sqrt(kf/rho);
+  const magMass=cfg.count*Math.PI*(m.Ro*m.Ro-m.Ri*m.Ri)*m.L*MAGDENS[m.type];
+  const moveMag=P.moving==='magnet';
+  const load=P.load;
+  // shifts
+  const shifts=sh>0?[...new Set([-sh,-Math.round(sh/2),0,Math.round(sh/2),sh])]:[0];
+  const ns=shifts.length;
+  const A=new Float64Array(nzf), rowF=new Int32Array(nzc);
+  const sg=new Float64Array(nzc); const Ps=shifts.map(()=>new Float64Array(nzc+1));
+  const forbPref=new Int32Array(nzc+1);
+  let best={score:-1};
+  const objective=P.obj;
+  for(let r1=0;r1<nr;r1++){
+    A.fill(0); rowF.fill(0); let vrow=0;
+    for(let r2=r1;r2<nr;r2++){
+      vrow+=dV[r2];
+      for(let j=0;j<nzf;j++) A[j]+=W[j*nr+r2];
+      for(let j=0;j<nzc;j++) rowF[j]+=F[j*nr+r2];
+      for(let j=0;j<nzc;j++){ sg[j]=P.sections?(A[j+sh]>=0?1:-1):1; forbPref[j+1]=forbPref[j]+(rowF[j]>0?1:0); }
+      for(let k=0;k<ns;k++){const s=shifts[k],p=Ps[k]; p[0]=0; for(let j=0;j<nzc;j++) p[j+1]=p[j]+sg[j]*A[j+sh+s];}
+      for(let j1=0;j1<nzc;j1++){ if(rowF[j1]>0) continue;
+        for(let j2=j1;j2<nzc;j2++){ if(rowF[j2]>0) break;
+          let sum=0,mn=1e9,mx=-1e9;
+          for(let k=0;k<ns;k++){const v=Ps[k][j2+1]-Ps[k][j1]; sum+=v; if(v<mn)mn=v; if(v>mx)mx=v;}
+          let fm=sum/ns; if(!P.sections){ if(fm<0){fm=-fm; const t=-mn; mn=-mx; mx=t;} }
+          if(fm<=0) continue;
+          const V=vrow*(j2-j1+1); if(P.mmax>0 && V*densEff>P.mmax) break; const km=kfac*fm/Math.sqrt(V);
+          let score=km;
+          if(objective==='acc'){ const mm=moveMag?magMass+load:V*densEff+load; score=km/mm; }
+          if(score>best.score) best={score,km,r1,r2,j1,j2,V,mn,mx};
+        }}
+    }}
+  if(best.score<0) return {invalid:'катушка не помещается'};
+  // details
+  const rin=best.r1*dr, rout=(best.r2+1)*dr, za=zlo+best.j1*dz, zb=zlo+(best.j2+1)*dz, h=zb-za;
+  // sections
+  let secs=1,prev=null; const secRows=[];
+  for(let j=best.j1;j<=best.j2;j++){ let a=0; for(let i=best.r1;i<=best.r2;i++) a+=W[(j+sh)*nr+i]; const s=a>=0?1:-1; if(P.sections){ if(prev!==null && s!==prev) secs++; prev=s;} secRows.push(s);}
+  const coilMass=best.V*densEff;
+  // free form (static) and ideal graded
+  const cells=[]; let ideal=0;
+  for(let j=0;j<nzc;j++) for(let i=0;i<nr;i++){ if(F[j*nr+i]) continue; const b=bF[(j+sh)*nr+i]; cells.push({j,i,b:Math.abs(b),dv:dV[i]}); ideal+=b*b*dV[i]; }
+  cells.sort((x,y)=>y.b-x.b);
+  let cs=0,cv=0,bestFF={score:-1};
+  for(let k=0;k<cells.length;k++){cs+=cells[k].b*cells[k].dv; cv+=cells[k].dv; if(P.mmax>0 && cv*densEff>P.mmax) break; const km=kfac*cs/Math.sqrt(cv);
+    let score=km; if(objective==='acc'){ score=km/((moveMag?magMass:cv*densEff)+load);} if(score>bestFF.score) bestFF={score,km,k:k+1,V:cv};}
+  const ffMask=new Uint8Array(nzc*nr); for(let k=0;k<bestFF.k;k++) ffMask[cells[k].j*nr+cells[k].i]=1;
+  const kmIdeal=Math.sqrt(kf/rho*ideal);
+  return {cfg,geom,zlo,zhi,dr,dz,nr,nzc,sh,bF,F,ffMask,rho,densEff,kf,
+    coil:{rin,rout,za,zb,h,V:best.V,mass:coilMass,secs,secRows},
+    km:best.km, kmMin:kfac*best.mn/Math.sqrt(best.V), kmMax:kfac*best.mx/Math.sqrt(best.V),
+    score:best.score, ff:{km:bestFF.km,V:bestFF.V,mass:bestFF.V*densEff}, kmIdeal, magMass,
+    moving:moveMag?magMass+load:coilMass+load};
+}
+// cup / pot lumped model
+function solveCup(P,cfg){
+  const m=P.mag, c=P.clear, St=P.stroke, Lm=cfg.count*m.L;
+  const Am=Math.PI*(m.Ro*m.Ro-m.Ri*m.Ri), rp=m.Ro, Bs=1.9, sigma=0.65, mur=1.05;
+  const mat=MAT[P.cond], rho=mat.rho20*(1+mat.alpha*(P.T-20)), kf=P.kf, densEff=kf*mat.dens+(1-kf)*1200, kfac=Math.sqrt(kf/rho);
+  const magMass=cfg.count*Am*m.L*MAGDENS[m.type];
+  let best={score:-1};
+  const ints=(x0,x1,t,lam)=>{ // integral of profile from x0 to x1
+    const F=x=>{ const ax=Math.abs(x), sgn=x<0?-1:1; let v; if(ax<=t/2) v=ax; else v=t/2+lam*(1-Math.exp(-(ax-t/2)/lam)); return sgn*v; };
+    return F(x1)-F(x0); };
+  const wSteps=[], tSteps=[], hSteps=[];
+  for(let w=0.2e-3; w<=Math.min(8e-3,m.Ro*1.5); w+=0.1e-3) wSteps.push(w);
+  for(let t=0.5e-3; t<=Math.max(Lm,1e-3); t+=0.25e-3) tSteps.push(t);
+  for(let h=0.5e-3; h<=Math.max(4*Lm,St+8e-3); h+=0.25e-3) hSteps.push(h);
+  const shifts=[-St/2,-St/4,0,St/4,St/2];
+  for(const w of wSteps){ const g=w+2*c, rc=rp+c+w/2;
+    for(const t of tSteps){
+      const lam=0.45*g;
+      const Ag=2*Math.PI*(rp+g/2)*(t+2*lam);
+      let Bg=sigma*m.Br*Am/(Ag+sigma*mur*Am*g/Lm);
+      const cap=Bs*Math.min(Math.PI*rp*rp, 2*Math.PI*rp*t)/Ag; if(Bg>cap) Bg=cap;
+      const flux=Bg*Ag; const ro=rp+g; const tw=Math.sqrt(ro*ro+flux/(Math.PI*Bs))-ro; const Rout=ro+tw;
+      if(Rout>P.Rmax) continue;
+      const Htot=Lm+2*t; if(P.Hlim>0 && Htot>P.Hlim) continue;
+      for(const h of hSteps){
+        let sum=0,mn=1e9,mx=-1e9; for(const d of shifts){const v=ints(d-h/2,d+h/2,t,lam); sum+=v; mn=Math.min(mn,v); mx=Math.max(mx,v);}
+        const fm=Bg*sum/shifts.length*2*Math.PI*rc*w; const V=2*Math.PI*rc*w*h; if(P.mmax>0 && V*densEff>P.mmax) break;
+        const km=kfac*fm/Math.sqrt(V); let score=km;
+        if(P.obj==='acc') score=km/((P.moving==='magnet'?magMass:V*densEff)+P.load);
+        if(score>best.score) best={score,km,w,t,h,g,Bg,Rout,tw,rc,V,kmMin:kfac*Bg*mn*2*Math.PI*rc*w/Math.sqrt(V),kmMax:kfac*Bg*mx*2*Math.PI*rc*w/Math.sqrt(V)};
+      }}}
+  if(best.score<0) return {invalid:'стакан не помещается в габарит'};
+  const rin=best.rc-best.w/2, rout=best.rc+best.w/2;
+  return {cfg,cup:best,rho,densEff,kf,coil:{rin,rout,za:-best.h/2,zb:best.h/2,h:best.h,V:best.V,mass:best.V*densEff,secs:1},
+    km:best.km,kmMin:best.kmMin,kmMax:best.kmMax,score:best.score,magMass,Lm,moving:(P.moving==='magnet'?magMass:best.V*densEff)+P.load};
+}
+
+
+const $=id=>document.getElementById(id);
+const IDS=['shape','grade','D','Din','L','count','obj','Rmax','Hlim','mmax','moving','stroke','clear','load','cond','kf','T','hconv','U','wire','sections','res','showff'];
+function save(){try{const o={};IDS.forEach(i=>{const e=$(i);o[i]=e.type==='checkbox'?e.checked:e.value});localStorage.setItem('vclab',JSON.stringify(o));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem('vclab')||'null');if(!o)return;IDS.forEach(i=>{if(o[i]===undefined)return;const e=$(i);if(e.type==='checkbox')e.checked=o[i];else e.value=o[i];});}catch(e){}}
+const num=(id,d)=>{const v=parseFloat(String($(id).value).replace(',','.'));return isFinite(v)?v:d};
+function params(){
+  const [Br,type]=$('grade').value.split('|'); const ring=$('shape').value==='ring';
+  const D=num('D',10), Din=ring?Math.min(num('Din',4),D-0.5):0;
+  const [nr,nz]=$('res').value.split('|').map(Number);
+  return {mag:{Ro:D/2e3,Ri:Din/2e3,L:num('L',5)/1e3,Br:+Br,type},count:Math.max(1,Math.min(6,Math.round(num('count',1)))),
+    clear:Math.max(0.05,num('clear',0.3))/1e3,stroke:Math.max(0,num('stroke',0))/1e3,Rmax:Math.max(D/2+1,num('Rmax',12))/1e3,
+    Hlim:num('Hlim',0)/1e3,mmax:num('mmax',0)/1e3,nr,nz,cond:$('cond').value,T:num('T',80),kf:+$('kf').value,
+    moving:$('moving').value,load:num('load',0)/1e3,obj:$('obj').value,sections:$('sections').checked,
+    hconv:+$('hconv').value,U:num('U',5),wire:num('wire',0.23)/1e3};
+}
+function configs(P){
+  const n=P.count,L=P.mag.L,list=[]; const mc=P.moving==='coil';
+  const sp=f=>f.map(x=>x*L);
+  list.push({name:'Один магнит',desc:'катушка вокруг голого магнита',count:1,mode:'same',spacers:[0],plate:false});
+  if(n>1) list.push({name:`Стопка ×${n}`,desc:'все одной полярностью, как один длинный магнит',count:n,mode:'same',spacers:[0],plate:false});
+  if(n>1) list.push({name:`Встречная стопка ×${n}`,desc:'соседние магниты навстречу: поле выдавливается наружу в стыках',count:n,mode:'alt',spacers:sp([0,0.2,0.4,0.8,1.2,1.6]),plate:false});
+  if(n>2) list.push({name:'Встречная пара',desc:'два магнита навстречу',count:2,mode:'alt',spacers:sp([0,0.2,0.4,0.8,1.2,1.6]),plate:false});
+  if(n>1) list.push({name:`Раздвинутая стопка ×${n}`,desc:'одна полярность с зазорами',count:n,mode:'same',spacers:sp([0.2,0.4,0.8,1.2,1.6]),plate:false});
+  if(mc){
+    list.push({name:n>1?`Стопка ×${n} на стальной плите`:'Магнит на стальной плите',desc:'плита работает как зеркало и удваивает магнит',count:n,mode:'same',spacers:[0],plate:true});
+    if(n>1) list.push({name:`Встречная стопка ×${n} на плите`,desc:'встречная стопка плюс зеркало снизу',count:n,mode:'alt',spacers:sp([0,0.2,0.4,0.8,1.2,1.6]),plate:true});
+    list.push({name:n>1?`Стакан с ярмом, ×${n}`:'Стакан с ярмом',desc:'классический динамик: магнит, полюс, стальной стакан. Оценка',count:n,cup:true});
+  }
+  return list;
+}
+let results=[],selIdx=0,runId=0;
+const sleep=()=>new Promise(r=>setTimeout(r,0));
+async function run(){
+  const my=++runId; const P=params(); save();
+  $('DinL').style.display=$('shape').value==='ring'?'':'none';
+  const list=configs(P); results=[];
+  $('status').textContent='Считаю…';
+  for(let k=0;k<list.length;k++){
+    await sleep(); if(my!==runId) return;
+    const c=list[k]; let r;
+    try{
+      if(c.cup){ r=solveCup(P,{count:c.count}); }
+      else { let best=null; for(const s of c.spacers){ await sleep(); if(my!==runId) return; const x=solveBare(P,{count:c.count,mode:c.mode,spacer:s,plate:c.plate}); if(!x.invalid && (!best||x.score>best.score)) best=x; if(!best && x.invalid) best=x; } r=best; }
+    }catch(e){ r={invalid:'ошибка расчёта'}; }
+    r.meta=c; results.push(r);
+    $('status').textContent=`Считаю… ${k+1} из ${list.length}`;
+  }
+  if(my!==runId) return;
+  const order=results.map((r,i)=>i).filter(i=>!results[i].invalid).sort((a,b)=>results[b].score-results[a].score);
+  selIdx=order.length?order[0]:0;
+  results.P=P; results.order=order;
+  renderTable(); show(selIdx);
+  $('status').textContent=order.length?'Готово, лучшая сверху':'Ничего не поместилось: увеличьте габарит';
+}
+const f3=v=>{const d=v>=100?0:v>=10?1:v>=1?2:3;return v.toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});};
+const fmt=(v,d=1)=>v.toLocaleString('ru-RU',{maximumFractionDigits:d,minimumFractionDigits:d});
+function renderTable(){
+  const tb=$('tb'); tb.innerHTML='';
+  const ord=[...results.order, ...results.map((r,i)=>i).filter(i=>results[i].invalid)];
+  const maxS=Math.max(...results.order.map(i=>results[i].km),1e-9);
+  for(const i of ord){ const r=results[i]; const tr=document.createElement('tr');
+    if(r.invalid){ tr.className='bad'; tr.innerHTML=`<td>${r.meta.name}<small>${r.invalid}</small></td><td>—</td><td>—</td><td>—</td><td>—</td>`; }
+    else{
+      const acc=r.km/Math.max(r.moving,1e-6); const flat=r.kmMax>0?Math.round(100*r.kmMin/r.kmMax):100;
+      const sp=r.cfg&&r.cfg.spacer>0?`, зазор ${fmt(r.cfg.spacer*1e3,1)} мм`:'';
+      tr.innerHTML=`<td>${r.meta.name}<small>${r.meta.desc}${sp}</small></td><td>${f3(r.km)}<span class="bar" style="width:${Math.round(40*r.km/maxS)}px"></span></td><td>${fmt(acc,0)}</td><td>${fmt(r.coil.mass*1e3,1)}</td><td>${flat}%</td>`;
+      tr.tabIndex=0; tr.onclick=()=>show(i); tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();show(i);}};
+      if(i===selIdx) tr.classList.add('sel');
+    }
+    tb.appendChild(tr);}
+}
+const WIRES=[0.05,0.063,0.071,0.08,0.09,0.1,0.112,0.125,0.14,0.16,0.18,0.2,0.224,0.25,0.28,0.315,0.355,0.4,0.45,0.5,0.56,0.63,0.71,0.8,0.9,1.0,1.12,1.25,1.4,1.6];
+function show(i){
+  selIdx=i; const r=results[i], P=results.P; if(!r||r.invalid) return;
+  [...$('tb').children].forEach(tr=>tr.classList.remove('sel'));
+  const pos=[...results.order, ...results.map((x,k)=>k).filter(k=>results[k].invalid)].indexOf(i); if($('tb').children[pos]) $('tb').children[pos].classList.add('sel');
+  $('cfgname').textContent=r.meta.name+(r.cfg&&r.cfg.spacer>0?`, зазор ${fmt(r.cfg.spacer*1e3,1)} мм`:'');
+  $('kmv').textContent=f3(r.km);
+  const c=r.coil; const As=2*Math.PI*(c.rin+c.rout)*c.h+2*Math.PI*(c.rout*c.rout-c.rin*c.rin);
+  const Pmax=P.hconv*As*Math.max(1,P.T-25); const Fc=r.km*Math.sqrt(Pmax);
+  const acc=r.km/Math.max(r.moving,1e-6); const flat=r.kmMax>0?Math.round(100*r.kmMin/r.kmMax):100;
+  const rd=[['Катушка, внутр. Ø',fmt(c.rin*2e3,1)+' мм'],['внешн. Ø',fmt(c.rout*2e3,1)+' мм'],['высота',fmt(c.h*1e3,1)+' мм'],
+    ['Масса катушки',fmt(c.mass*1e3,2)+' г'],['Секций',String(c.secs||1)],['Ровность по ходу',flat+'%'],
+    ['Ускорение на √Вт',fmt(acc,0)+' м/с²'],['Тепловой предел',fmt(Pmax,2)+' Вт'],['Сила длительно',fmt(Fc,2)+' Н']];
+  if(r.cup) rd.push(['Поле в зазоре',fmt(r.cup.Bg,2)+' Тл'],['Зазор / верхняя плита',fmt(r.cup.g*1e3,1)+' / '+fmt(r.cup.t*1e3,2)+' мм'],['Стенка стакана',fmt(r.cup.tw*1e3,2)+' мм']);
+  $('read').innerHTML=rd.map(([a,b])=>`<div><dt>${a}</dt><dd>${b}</dd></div>`).join('');
+  // winding
+  const Aw=Math.PI*P.wire*P.wire/4, Awin=(c.rout-c.rin)*c.h, lm=Math.PI*(c.rin+c.rout);
+  const N=Math.floor(r.kf*Awin/Aw); const R=N>0?r.rho*N*lm/Aw:Infinity; const I=P.U/R, Pw=P.U*I, F=r.km*Math.sqrt(Pw);
+  const Rneed=P.U*P.U/Pmax; const dneed=Math.sqrt(4/Math.PI*Math.sqrt(r.rho*lm*r.kf*Awin/Rneed));
+  let dstd=WIRES[0]; for(const w of WIRES) if(w<=dneed*1e3+1e-9) dstd=w;
+  const wd=[['Витков',N>0?N.toLocaleString('ru-RU'):'провод не влезает'],['Сопротивление',isFinite(R)?fmt(R,R<10?2:1)+' Ом':'—'],['Ток',isFinite(I)?fmt(I,I<1?3:2)+' А':'—'],
+    ['Мощность',isFinite(Pw)?fmt(Pw,2)+' Вт':'—'],['Сила',isFinite(F)?fmt(F,2)+' Н':'—'],['Провод под тепловой предел',fmt(dstd,3)+' мм']];
+  $('wind').innerHTML=wd.map(([a,b])=>`<div><dt>${a}</dt><dd>${b}</dd></div>`).join('');
+  // notes
+  let nt='';
+  if(isFinite(Pw) && Pw>Pmax*1.05) nt+=`<p class="note warn">При ${fmt(P.U,1)} В катушка греется на ${fmt(Pw,1)} Вт, а отвести может около ${fmt(Pmax,2)} Вт. Длительно — только ШИМ или провод тоньше, около ${fmt(dstd,3)} мм. Коротким импульсом можно.</p>`;
+  if(!r.cup && r.ff){
+    const gff=Math.round(100*(r.ff.km/r.km-1)), gid=Math.round(100*(r.kmIdeal/r.km-1));
+    nt+=`<p class="note">Свободная форма катушки (только самые сильные зоны поля, без хода) дала бы ${f3(r.ff.km)} Н/√Вт, на ${gff}% больше прямоугольной. Градиентная обмотка, где плотность тока растёт вместе с полем (разные провода по зонам), — потолок ${f3(r.kmIdeal)} Н/√Вт во всём габарите.</p>`;
+  }
+  if(c.secs>1) nt+=`<p class="note">Катушка из ${c.secs} встречных секций: поле меняет знак по высоте, поэтому соседние части мотаются в разные стороны. Границы секций показаны пунктиром.</p>`;
+  $('notes').innerHTML=nt;
+  draw();
+}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function hexA(h,a){h=h.replace('#','');const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;}
+function draw(){
+  const r=results[selIdx], P=results.P; if(!r||r.invalid) return;
+  const cv=$('cv'), box=cv.parentElement, W=box.clientWidth, dpr=window.devicePixelRatio||1;
+  const m=P.mag;
+  let zlo,zhi; if(r.cup){ const cu=r.cup; zlo=-cu.t/2-r.Lm-cu.t-0.0008; zhi=Math.max(cu.h/2+P.stroke/2,cu.t/2)+0.0015; } else { zlo=r.zlo-(r.cfg.plate?0.0015:0); zhi=r.zhi; }
+  const Rd=P.Rmax; let sc=(W-16)/(2*Rd); let Hpx=sc*(zhi-zlo); const maxH=Math.min(window.innerHeight*0.7,W*1.4);
+  if(Hpx>maxH){ sc=maxH/(zhi-zlo); Hpx=maxH; }
+  const H=Math.round(Hpx+16);
+  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); cv.style.height=H+'px';
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const cx=W/2, X=rr=>cx+rr*sc, Y=z=>H-8-(z-zlo)*sc;
+  const cop=css('--copper'), stl=css('--steel'), gra=css('--graphite'), iro=css('--iron'), ink=css('--ink'), muted=css('--muted');
+  const rect=(r0,r1,z0,z1,fill,both=true)=>{g.fillStyle=fill; const y0=Y(z1),h=Y(z0)-Y(z1); g.fillRect(X(r0),y0,(r1-r0)*sc,h); if(both) g.fillRect(X(-r1),y0,(r1-r0)*sc,h);};
+  if(!r.cup){
+    let bmax=0; const nr=r.nr,nzc=r.nzc,sh=r.sh;
+    for(let j=0;j<nzc;j++) for(let i=0;i<nr;i++){ if(r.F[j*nr+i]) continue; bmax=Math.max(bmax,Math.abs(r.bF[(j+sh)*nr+i])); }
+    for(let j=0;j<nzc;j++){ const z0=r.zlo+j*r.dz;
+      for(let i=0;i<nr;i++){ const b=r.bF[(j+sh)*nr+i]; const a=Math.min(1,Math.sqrt(Math.abs(b)/(bmax||1)))*0.92;
+        if(a<0.02) continue; rect(i*r.dr,(i+1)*r.dr+1e-7,z0,z0+r.dz+1e-7,hexA(b>0?cop:stl,a)); }}
+    if(r.cfg.plate){ rect(0,Rd,zlo,0,iro); }
+    for(const mg of r.geom.mags){ rect(m.Ri,m.Ro,mg.z0,mg.z1,gra); arrow(0,mg.z0,mg.z1,mg.dir); if(m.Ri>0) arrow(null,mg.z0,mg.z1,mg.dir); }
+    if($('showff').checked){ g.fillStyle=hexA(ink,0.55);
+      for(let j=0;j<nzc;j++) for(let i=0;i<nr;i++) if(r.ffMask[j*nr+i]){ const z=r.zlo+(j+.5)*r.dz, rr=(i+.5)*r.dr, s=Math.max(1.2,Math.min(r.dr,r.dz)*sc*0.22);
+        g.fillRect(X(rr)-s/2,Y(z)-s/2,s,s); g.fillRect(X(-rr)-s/2,Y(z)-s/2,s,s);} }
+  } else {
+    const cu=r.cup, rp=m.Ro, Lm=r.Lm, t=cu.t, gg=cu.g, Ro=cu.Rout;
+    const zt=t/2, zm1=-t/2, zm0=zm1-Lm, zb=zm0-t;
+    // gap field shading
+    const lam=0.45*gg; const steps=60;
+    for(let k=0;k<steps;k++){ const z0=zlo+(zhi-zlo)*k/steps, z1=zlo+(zhi-zlo)*(k+1)/steps, zc=(z0+z1)/2, az=Math.abs(zc);
+      const prof=az<=t/2?1:Math.exp(-(az-t/2)/lam); if(zc<zm0) continue; rect(rp,rp+gg,z0,z1+1e-7,hexA(cop,0.9*Math.sqrt(prof))); }
+    rect(0,Ro,zb,zm0,iro); rect(rp+gg,Ro,zm0,zt,iro); rect(m.Ri,rp,zm1,zt,iro);
+    if(m.Ri>0) rect(0,m.Ri,zm0,zt,'rgba(0,0,0,0)');
+    rect(m.Ri,m.Ro,zm0,zm1,gra); arrow(0,zm0,zm1,1);
+  }
+  // coil
+  const c=r.coil; g.lineWidth=2; g.strokeStyle=ink; g.fillStyle=css('--coilfill');
+  for(const s of [1,-1]){ const x0=s>0?X(c.rin):X(-c.rout); const w=(c.rout-c.rin)*sc, y0=Y(c.zb), h=Y(c.za)-Y(c.zb);
+    g.fillRect(x0,y0,w,h); g.strokeRect(x0,y0,w,h);
+    if(c.secRows && c.secs>1){ g.save(); g.setLineDash([4,3]); g.lineWidth=1.5; let prev=c.secRows[0];
+      for(let k=1;k<c.secRows.length;k++){ if(c.secRows[k]!==prev){ const z=c.za+k*r.dz; g.beginPath(); g.moveTo(x0,Y(z)); g.lineTo(x0+w,Y(z)); g.stroke(); prev=c.secRows[k]; } } g.restore(); } }
+  // axis + scale
+  g.save(); g.setLineDash([2,4]); g.strokeStyle=hexA(muted,0.7); g.lineWidth=1; g.beginPath(); g.moveTo(cx,4); g.lineTo(cx,H-4); g.stroke(); g.restore();
+  const mm=Rd*1e3>15?5:2; const bx=10, by=H-14; g.strokeStyle=ink; g.lineWidth=2; g.beginPath(); g.moveTo(bx,by); g.lineTo(bx+mm/1e3*sc,by); g.stroke();
+  g.fillStyle=ink; g.font='500 12px "Golos Text",sans-serif'; g.fillText(mm+' мм',bx,by-6);
+  function arrow(_,z0,z1,dir){ const xm=cx, y0=Y(z0), y1=Y(z1), len=Math.min(Math.abs(y0-y1)*0.6,40), yc=(y0+y1)/2, hw=Math.max(4,Math.min(8,m.Ro*sc*0.25));
+    const xs=m.Ri>0?[X((m.Ri+m.Ro)/2),X(-(m.Ri+m.Ro)/2)]:[xm]; g.strokeStyle='#fff'; g.fillStyle='#fff'; g.lineWidth=2;
+    for(const x of xs){ const ya=yc+dir*len/2, yb=yc-dir*len/2; g.beginPath(); g.moveTo(x,ya); g.lineTo(x,yb); g.stroke();
+      g.beginPath(); g.moveTo(x,yb-dir*2); g.lineTo(x-hw,yb+dir*hw); g.lineTo(x+hw,yb+dir*hw); g.closePath(); g.fill(); } }
+}
+let tmr; function sched(){ clearTimeout(tmr); tmr=setTimeout(run,350); }
+load();
+IDS.forEach(id=>{ const e=$(id); if(id==='showff'){ e.addEventListener('change',()=>{save();draw();}); return; } e.addEventListener('input',sched); e.addEventListener('change',sched); });
+let rw; window.addEventListener('resize',()=>{clearTimeout(rw);rw=setTimeout(draw,150);});
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',draw);
+run();
+</script>
+</body>
+</html>

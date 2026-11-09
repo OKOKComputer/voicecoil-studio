@@ -1,0 +1,17 @@
+{
+  "name": "voicecoil-studio",
+  "version": "2.0.0",
+  "description": "Среда для расчёта магнитных актуаторов в браузере: войсколы, безжелезные BLDC, шаровые моторы, произвольные сцены из магнитов и катушек",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "serve": "python3 -m http.server 8765 --directory src",
+    "test": "node test/engine.test.mjs && node test/bldc.test.mjs && node test/mods.test.mjs",
+    "test:engine": "node test/engine.test.mjs",
+    "test:bldc": "node test/bldc.test.mjs",
+    "test:mods": "node test/mods.test.mjs"
+  },
+  "engines": { "node": ">=18" },
+  "license": "MIT",
+  "devDependencies": {}
+}
